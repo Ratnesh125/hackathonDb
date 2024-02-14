@@ -168,13 +168,13 @@ app.post("/auth/login", (req, res) => {
           });
         } else {
           res.send({
-            message: ${dataType} or Password Incorrect,
+            message: "Password Incorrect",
             success: false,
           });
         }
       })
       .catch((err) => {
-        res.send({ message: Please Try Again, success: false });
+        res.send({ message: "Please Try Again", success: false });
       });
   } catch {
     res.send({ message: "Customer Login Failed", success: false });
