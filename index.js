@@ -264,22 +264,23 @@ app.post(
       }
 
       const imageBase64String = imageFile.buffer.toString("base64");
+      let constructedString = "data:" + imageFile.mimetype + ";" + "base64," + imageBase64String;
       const imageResult = await cloudinary.uploader.upload(
-        data:${imageFile.mimetype};base64,${imageBase64String},
-        {
+      constructedString,{
           folder: "Techbuddies",
-          public_id: Course_${Date.now()}_image,
+          public_id: "Course_"+Date.now()+"_image",
         }
       );
       const imageLink = imageResult.secure_url;
 
       const videoBase64String = videoFile.buffer.toString("base64");
+      let constructedVideoString = '"data:' + videoFile.mimetype + ';base64,' + videoBase64String + '"';
       const videoResult = await cloudinary.uploader.upload(
-        data:${videoFile.mimetype};base64,${videoBase64String},
+        constructedVideoString,
         {
           resource_type: "video",
           folder: "Techbuddies",
-          public_id: Course_${Date.now()}_video,
+          public_id: "Course_"+Date.now()+"_video",
         }
       );
       const videoLink = videoResult.secure_url;
@@ -470,5 +471,5 @@ app.get("/auth/topics/:id", async (req, res) => {
 });
 
 app.listen(PORT, function () {
-  console.log(Backend is running on Port: ${PORT});
+  console.log("Backend is running on Port: "+PORT);
 });
