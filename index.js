@@ -103,8 +103,6 @@ const courseSchema = new Schema(
     },
     lvlOfDiff: {
       type: String,
-      enum: ["beginner", "intermediate", "advanced"],
-      default: "beginner",
     },
     imageLink: {
       type: String,
@@ -113,10 +111,6 @@ const courseSchema = new Schema(
     videoLink: {
       type: String,
       trim: true,
-    },
-    published: {
-      type: Boolean,
-      default: false,
     },
     userId: { type: String},
   },
@@ -247,7 +241,7 @@ app.post(
       if (!req.files || !req.files.imageLink || !req.files.videoLink) {
         return res.status(400).send("Both image and video files are required.");
       }
-      const { title, description, lvlOfDiff, published, userId } = req.body;
+      const { title, description, lvlOfDiff, userId } = req.body;
 
       const courseInUse = await isCourseAlreadyInUse(title);
       if (courseInUse) {
@@ -268,10 +262,12 @@ app.post(
           public_id: "Course_"+Date.now()+"_image",
         }
       );
+      console.log("I am here")
       const imageLink = imageResult.secure_url;
 
       const videoBase64String = videoFile.buffer.toString("base64");  
-      let constructedVideoString = "data: "+ videoFile.mimetype +";"+"base64,"+videoBase64String;
+      let constructedVideoString = "data:"+ videoFile.mimetype +";"+"base64,"+videoBase64String;
+
       const videoResult = await cloudinary.uploader.upload(
         constructedVideoString,
         {
@@ -281,20 +277,19 @@ app.post(
         }
       );
       const videoLink = videoResult.secure_url;
-
+  
       const addCourse = new Course({
         title,
         description,
         lvlOfDiff,
         imageLink,
         videoLink,
-        published,
         userId,
       });
-
       addCourse
         .save()
         .then((item) => {
+          console.log(item);
           res.send({ message: "Course Added", data: item, success: true });
         })
         .catch((err) => {
@@ -302,7 +297,6 @@ app.post(
           res.send({ message: "Please Try Again", success: false });
         });
     } catch (err) {
-      console.log(err);
       res.send({ message: "Course Can't Added", success: false });
     }
   }
