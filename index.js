@@ -106,10 +106,6 @@ const courseSchema = new Schema(
       enum: ["beginner", "intermediate", "advanced"],
       default: "beginner",
     },
-    courseDate: {
-      type: Date,
-      default: Date.now,
-    },
     imageLink: {
       type: String,
       trim: true,
@@ -122,8 +118,9 @@ const courseSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    userId: { type: String, required: true },
+    userId: { type: String},
   },
+  {timestamps: true},
   { versionKey: false },
   { strict: false }
 );
