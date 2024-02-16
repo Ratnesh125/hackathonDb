@@ -270,8 +270,8 @@ app.post(
       );
       const imageLink = imageResult.secure_url;
 
-      const videoBase64String = videoFile.buffer.toString("base64");
-      let constructedVideoString = '"data:' + videoFile.mimetype + ';base64,' + videoBase64String + '"';
+      const videoBase64String = videoFile.buffer.toString("base64");  
+      let constructedVideoString = "data: "+ videoFile.mimetype +";"+"base64,"+videoBase64String;
       const videoResult = await cloudinary.uploader.upload(
         constructedVideoString,
         {
