@@ -767,7 +767,7 @@ app.post("/auth/addDoc", async (req, res) => {
 
 app.get("/auth/getDoc/:id", async (req, res) => {
         const { id } = req.params;
-      Documentation.find({ CourseID: id,Status: { $eq: "Accepted" }}).then((resp) => {
+Documentation.find({ CourseID: id, Status: { $eq: "Accepted" }}).sort({ contentID: 1 }).then((resp) => {
       res.send(resp);
     })
     .catch((error) => {
