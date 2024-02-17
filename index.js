@@ -821,7 +821,7 @@ app.get("/auth/getVideos/:id", async (req, res) => {
     }
 });
 
-app.get("/auth/getNotes/:id", async (req, res) => {
+app.get("/auth/getNote/:id", async (req, res) => {
     try {
       const { id } = req.params;
       Notes.find({ UserID: id })
@@ -864,7 +864,7 @@ app.get("/auth/getProject/:id", async (req, res) => {
       res.send("db error");
     }
 });
-app.get("/auth/getProject/:id", async (req, res) => {
+app.get("/auth/getProjects/:id", async (req, res) => {
     try {
       const { id } = req.params;
       Projects.find({ CourseID: id,Status: { $eq: "Accepted" } })
