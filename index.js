@@ -38,11 +38,9 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log(`User Connected: ${socket.id}`);
 
   socket.on("join_room", (data) => {
     socket.join(data);
-    console.log(`User with ID: ${socket.id} joined room: ${data}`);
   });
 
   socket.on("send_message", (data) => {
@@ -50,7 +48,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("User Disconnected", socket.id);
   });
 });
 
@@ -461,6 +458,7 @@ app.post("/auth/addNotes", upload.single("NotesLink"), async (req, res) => {
     const {UserID, NotesTitle, NotesDesc, CourseID } = req.body;
 
     const notesLink = req.file;
+    console.log(notesLink);
     if (!notesLink) {
       return res.status(400).send("Notes files are required.");
     }
@@ -472,7 +470,6 @@ app.post("/auth/addNotes", upload.single("NotesLink"), async (req, res) => {
     const videoResult = await cloudinary.uploader.upload(
       constructedVideoString,
       {
-        resource_type: "pdf",
         folder: "Techbuddies",
         public_id: "Course_" + Date.now() + "_video",
       }
