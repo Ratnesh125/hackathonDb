@@ -790,7 +790,65 @@ app.get("/auth/getDoc", async (req, res) => {
       res.status(500).send({ error: error.message });
     });
 });
+app.get("/auth/getDocs/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      Documentation.findOne({ UserID: id })
+        .then((item) => {
+          res.send({ data: item });
+        })
+        .catch((err) => {
+          res.send("Can't Find Course");
+        });
+    } catch {
+      res.send("db error");
+    }
+});
 
+app.get("/auth/getVideo/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      Videos.findOne({ UserID: id })
+        .then((item) => {
+          res.send({ data: item });
+        })
+        .catch((err) => {
+          res.send("Can't Find Course");
+        });
+    } catch {
+      res.send("db error");
+    }
+});
+
+app.get("/auth/getNotes/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      Notes.findOne({ UserID: id })
+        .then((item) => {
+          res.send({ data: item });
+        })
+        .catch((err) => {
+          res.send("Can't Find Course");
+        });
+    } catch {
+      res.send("db error");
+    }
+});
+
+app.get("/auth/getProject/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      Projects.findOne({ UserID: id })
+        .then((item) => {
+          res.send({ data: item });
+        })
+        .catch((err) => {
+          res.send("Can't Find Course");
+        });
+    } catch {
+      res.send("db error");
+    }
+});
 app.listen(PORT, function () {
   console.log("Backend is running on Port: " + PORT);
 });
