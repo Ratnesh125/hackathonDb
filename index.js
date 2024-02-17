@@ -806,7 +806,7 @@ app.post("/UpdateStatus", (req, res) => {
 app.get("/auth/getDocs/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      Documentation.findOne({ UserID: id })
+      Documentation.find{ UserID: id })
         .then((item) => {
           res.send({ data: item });
         })
