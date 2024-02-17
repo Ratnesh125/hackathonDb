@@ -147,7 +147,7 @@ const VideoSchema = Schema(
     VideoLink: { type: String },
      Status: {
       type: String,
-      default: "Rejected",
+      default: "Pending",
     },
   },
   { timestamps: true },
@@ -164,7 +164,7 @@ const NotesSchema = Schema(
     NotesLink: { type: String },
      Status: {
       type: String,
-      default: "Rejected",
+      default: "Pending",
     },
   },
   { timestamps: true },
@@ -194,7 +194,7 @@ const DocumentationSchema = Schema(
     ContentID: { type: String },
     Status: {
       type: String,
-      default: "Rejected",
+      default: "Pending",
     },
   },
   { timestamps: true },
