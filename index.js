@@ -780,10 +780,9 @@ app.post("/auth/addDoc", async (req, res) => {
     });
 });
 
-app.get("/auth/getDoc", async (req, res) => {
-  Documentation
-    .find({})
-    .then((resp) => {
+app.get("/auth/getDoc/:id", async (req, res) => {
+        const { id } = req.params;
+      Documentation.findOne({ CourseID: id }).then((resp) => {
       res.send(resp);
     })
     .catch((error) => {
