@@ -789,6 +789,20 @@ app.get("/auth/getDoc/:id", async (req, res) => {
       res.status(500).send({ error: error.message });
     });
 });
+app.post("/UpdateStatus", (req, res) => {
+  const { id, Statusmsg } = req.body;
+  try {
+    Documentation.updateOne({ _id: id }, { Status: Statusmsg })
+      .then((item) => {
+        res.send({ message: "Update Successfully" });
+      })
+      .catch((err) => {
+        res.send({ message: "Can't Update Product" });
+      });
+  } catch {
+    res.send("db error");
+  }
+});
 app.get("/auth/getDocs/:id", async (req, res) => {
     try {
       const { id } = req.params;
