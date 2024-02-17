@@ -788,6 +788,37 @@ app.post("/UpdateStatus", (req, res) => {
     res.send("db error");
   }
 });
+
+app.post("/UpdateStatus/video", (req, res) => {
+  const { id, Statusmsg } = req.body;
+  try {
+    Videos.updateOne({ _id: id }, { Status: Statusmsg })
+      .then((item) => {
+        res.send({ message: "Update Successfully" });
+      })
+      .catch((err) => {
+        res.send({ message: "Can't Update Product" });
+      });
+  } catch {
+    res.send("db error");
+  }
+});
+
+app.post("/UpdateStatus/note", (req, res) => {
+  const { id, Statusmsg } = req.body;
+  try {
+    Notes.updateOne({ _id: id }, { Status: Statusmsg })
+      .then((item) => {
+        res.send({ message: "Update Successfully" });
+      })
+      .catch((err) => {
+        res.send({ message: "Can't Update Product" });
+      });
+  } catch {
+    res.send("db error");
+  }
+});
+
 app.get("/auth/getDocs/:id", async (req, res) => {
     try {
       const { id } = req.params;
