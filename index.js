@@ -780,7 +780,7 @@ app.post("/UpdateStatus", (req, res) => {
 app.get("/auth/getDocs/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      Documentation.find({ UserID: id })
+      Documentation.find({ UserID: id})
         .then((item) => {
           res.send({ data: item });
         })
@@ -806,6 +806,20 @@ app.get("/auth/getVideo/:id", async (req, res) => {
       res.send("db error");
     }
 });
+app.get("/auth/getVideos/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      Videos.find({ CourseID: id,Status: { $eq: "Accepted" } })
+        .then((item) => {
+          res.send({ data: item });
+        })
+        .catch((err) => {
+          res.send("Can't Find Course");
+        });
+    } catch {
+      res.send("db error");
+    }
+});
 
 app.get("/auth/getNotes/:id", async (req, res) => {
     try {
@@ -821,11 +835,39 @@ app.get("/auth/getNotes/:id", async (req, res) => {
       res.send("db error");
     }
 });
+app.get("/auth/getNotes/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      Notes.find({ CourseID: id ,Status: { $eq: "Accepted" }})
+        .then((item) => {
+          res.send({ data: item });
+        })
+        .catch((err) => {
+          res.send("Can't Find Course");
+        });
+    } catch {
+      res.send("db error");
+    }
+});
 
 app.get("/auth/getProject/:id", async (req, res) => {
     try {
       const { id } = req.params;
       Projects.find({ UserID: id })
+        .then((item) => {
+          res.send({ data: item });
+        })
+        .catch((err) => {
+          res.send("Can't Find Course");
+        });
+    } catch {
+      res.send("db error");
+    }
+});
+app.get("/auth/getProject/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      Projects.find({ CourseID: id,Status: { $eq: "Accepted" } })
         .then((item) => {
           res.send({ data: item });
         })
