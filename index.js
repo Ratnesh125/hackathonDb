@@ -5,8 +5,10 @@ import cors from "cors";
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
 import { memoryStorage } from "multer";
-dotenv.config();
+import http from "http";
+import { Server } from "socket.io";
 
+dotenv.config();
 const PORT = process.env.PORT || 3001;
 const app = express();
 app.use(express.json());
@@ -24,6 +26,32 @@ app.use(function (req, res, next) {
     "x-access-token, Origin, X-Requested-With, Content-Type, Accept"
   );
   next();
+});
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log(`User Connected: ${socket.id}`);
+
+  socket.on("join_room", (data) => {
+    socket.join(data);
+    console.log(`User with ID: ${socket.id} joined room: ${data}`);
+  });
+
+  socket.on("send_message", (data) => {
+    socket.to(data.room).emit("receive_message", data);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User Disconnected", socket.id);
+  });
 });
 
 try {
@@ -82,10 +110,8 @@ const topicSchema = new Schema(
     subTopicContent: {
       type: String,
     },
-    date: {
-      type: String,
-    },
   },
+  { timestamps: true },
   { versionKey: false },
   { strict: false }
 );
@@ -108,13 +134,57 @@ const courseSchema = new Schema(
       type: String,
       trim: true,
     },
-    videoLink: {
-      type: String,
-      trim: true,
-    },
-    userId: { type: String},
+    userId: { type: String },
   },
-  {timestamps: true},
+  { timestamps: true },
+  { versionKey: false },
+  { strict: false }
+);
+
+const VideoSchema = Schema(
+  {
+    CourseID: { type: String },
+    VideoTitle: { type: String },
+    VideoDesc: { type: String },
+    VideoLink: { type: String },
+  },
+  { timestamps: true },
+  { versionKey: false },
+  { strict: false }
+);
+
+const NotesSchema = Schema(
+  {
+    CourseID: { type: String },
+    NotesTitle: { type: String },
+    NotesDesc: { type: String },
+    NotesLink: { type: String },
+  },
+  { timestamps: true },
+  { versionKey: false },
+  { strict: false }
+);
+
+const ProjectSchema = Schema(
+  {
+    CourseID: { type: String },
+    ProjectTitle: { type: String },
+    ProjectDesc: { type: String },
+    GitRepoLink: { type: String },
+  },
+  { timestamps: true },
+  { versionKey: false },
+  { strict: false }
+);
+
+const DocumentationSchema = Schema(
+  {
+    CourseID: { type: String },
+    subTitle: { type: String },
+    subContent: { type: String },
+    ContentID: { type: String },
+  },
+  { timestamps: true },
   { versionKey: false },
   { strict: false }
 );
@@ -128,10 +198,52 @@ const EnrolledCourseschema = Schema(
   { strict: false }
 );
 
+const messageSchema = new Schema(
+  {
+    sender: {
+      type: String,
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+  },
+  { timestamps: true },
+  { versionKey: false },
+  { strict: false }
+);
+
+const groupChatSchema = new Schema(
+  {
+    groupId: {
+      type: Number,
+    },
+    groupName: {
+      type: String,
+      required: true,
+    },
+    members: [
+      {
+        type: String, // Assuming member usernames as strings
+      },
+    ],
+    messages: [messageSchema],
+  },
+  { timestamps: true },
+  { versionKey: false },
+  { strict: false }
+);
+
+const Group = model("groupchat", groupChatSchema);
 const Course = model("Course", courseSchema);
 const User = model("Users", userSchema);
 const EnrolledCourse = model("EnrolledCourses", EnrolledCourseschema);
 const Topic = model("Topic", topicSchema);
+const Videos = model("Videos", VideoSchema);
+const Notes = model("Notes", NotesSchema);
+const Projects = model("Projects", ProjectSchema);
+const Documentation = model("Documentation", DocumentationSchema);
 
 app.post("/auth/login", (req, res) => {
   try {
@@ -255,29 +367,29 @@ app.post(
       }
 
       const imageBase64String = imageFile.buffer.toString("base64");
-      let constructedString = "data:" + imageFile.mimetype + ";" + "base64," + imageBase64String;
-      const imageResult = await cloudinary.uploader.upload(
-      constructedString,{
-          folder: "Techbuddies",
-          public_id: "Course_"+Date.now()+"_image",
-        }
-      );
-      console.log("I am here")
+      let constructedString =
+        "data:" + imageFile.mimetype + ";" + "base64," + imageBase64String;
+      const imageResult = await cloudinary.uploader.upload(constructedString, {
+        folder: "Techbuddies",
+        public_id: "Course_" + Date.now() + "_image",
+      });
+      console.log("I am here");
       const imageLink = imageResult.secure_url;
 
-      const videoBase64String = videoFile.buffer.toString("base64");  
-      let constructedVideoString = "data:"+ videoFile.mimetype +";"+"base64,"+videoBase64String;
+      const videoBase64String = videoFile.buffer.toString("base64");
+      let constructedVideoString =
+        "data:" + videoFile.mimetype + ";" + "base64," + videoBase64String;
 
       const videoResult = await cloudinary.uploader.upload(
         constructedVideoString,
         {
           resource_type: "video",
           folder: "Techbuddies",
-          public_id: "Course_"+Date.now()+"_video",
+          public_id: "Course_" + Date.now() + "_video",
         }
       );
       const videoLink = videoResult.secure_url;
-  
+
       const addCourse = new Course({
         title,
         description,
@@ -301,6 +413,127 @@ app.post(
     }
   }
 );
+
+app.post("/auth/addVideo", upload.single("VideoLink"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .send({ message: "No file uploaded", success: false });
+    }
+
+    const { VideoTitle, VideoDesc, CourseID } = req.body;
+
+    const videoFile = req.file;
+
+    if (!videoFile.buffer) {
+      return res
+        .status(400)
+        .send({ message: "File buffer is missing", success: false });
+    }
+
+    const videoBase64String = videoFile.buffer.toString("base64");
+    const constructedVideoString =
+      "data:" + videoFile.mimetype + ";base64," + videoBase64String;
+
+    const videoResult = await cloudinary.uploader.upload(
+      constructedVideoString,
+      {
+        resource_type: "video",
+        folder: "Techbuddies",
+        public_id: "Course_" + Date.now() + "_video",
+      }
+    );
+
+    const VideoLink = videoResult.secure_url;
+    console.log(VideoLink);
+    const addVideos = new Videos({
+      VideoTitle,
+      VideoDesc,
+      CourseID,
+      VideoLink,
+    });
+
+    const savedVideo = await addVideos.save();
+
+    res
+      .status(200)
+      .send({ message: "Video Added", data: savedVideo, success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "An error occurred", success: false });
+  }
+});
+
+app.post("/auth/addNotes", upload.single("NotesLink"), async (req, res) => {
+  try {
+    if (!req.files || !req.files.NotesLink) {
+      return res.status(400).send("video files are required.");
+    }
+    const { NotesTitle, NotesDesc, CourseID } = req.body;
+
+    const notesLink = req.files.NotesLink;
+    if (!notesLink) {
+      return res.status(400).send("video files are required.");
+    }
+
+    const videoBase64String = notesLink.buffer.toString("base64");
+    let constructedVideoString =
+      "data:" + notesLink.mimetype + ";" + "base64," + videoBase64String;
+
+    const videoResult = await cloudinary.uploader.upload(
+      constructedVideoString,
+      {
+        resource_type: "pdf",
+        folder: "Techbuddies",
+        public_id: "Course_" + Date.now() + "_video",
+      }
+    );
+    const NotesLink = videoResult.secure_url;
+
+    const addNotes = new Notes({
+      NotesTitle,
+      NotesDesc,
+      CourseID,
+      NotesLink,
+    });
+    Notes.save()
+      .then((item) => {
+        console.log(item);
+        res.send({ message: "Notes Added", data: item, success: true });
+      })
+      .catch((err) => {
+        console.log(err);
+        res.send({ message: "Please Try Again", success: false });
+      });
+  } catch (err) {
+    res.send({ message: "Notes Can't Added", success: false });
+  }
+});
+app.post("/auth/addProject", async (req, res) => {
+  try {
+    const { ProjectTitle, ProjectDesc, GitRepoLink, CourseID } = req.body;
+
+    const addProject = new Projects({
+      ProjectTitle,
+      ProjectDesc,
+      GitRepoLink,
+      CourseID,
+    });
+    addProject
+      .save()
+      .then((item) => {
+        console.log(item);
+        res.send({ message: "Project Added", data: item, success: true });
+      })
+      .catch((err) => {
+        console.log(err);
+        res.send({ message: "Please Try Again", success: false });
+      });
+  } catch (err) {
+    res.send({ message: "Project Can't Added", success: false });
+  }
+});
 
 const isEnrolledCourseAlreadyInUse = async (id, userID) => {
   const existingUser = await EnrolledCourse.findOne({
@@ -461,6 +694,120 @@ app.get("/auth/topics/:id", async (req, res) => {
   }
 });
 
+app.post("/creategroup", async (req, res) => {
+  try {
+    const { groupName, members } = req.body;
+    // const groupName = "FRIENDS"
+    // const members = ["ratnesh", "me", "anuj"]
+    const groupId = Date.now();
+
+    // Validate if required fields are present
+    if (
+      !groupName ||
+      !members ||
+      !Array.isArray(members) ||
+      members.length === 0
+    ) {
+      return res
+        .status(400)
+        .send({ error: "Invalid request. Check your input data." });
+    }
+
+    // Create a new group
+    const newGroup = new Group({
+      groupId,
+      groupName,
+      members,
+      messages: [], // You may initialize the messages array here or leave it empty
+    });
+
+    // Save the new group to the database
+    const savedGroup = await newGroup.save();
+
+    res
+      .status(201)
+      .send({ message: "Group created successfully", group: savedGroup });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.get("/sendmessage", async (req, res) => {
+  try {
+    // const { groupId, sender, content } = req.body;
+    // if (!groupId || !sender || !content) {
+    //     return res.status(400).json({ error: 'Missing required parameters' });
+    // }
+    const groupId = 1707912300397;
+    sender = "ratnesh";
+    const groupChat = await Group.findOne({ groupId });
+
+    if (!groupChat) {
+      return res.status(404).send({ error: "Group not found" });
+    }
+
+    const newMessage = {
+      sender: "he",
+      content: "I'm fine",
+      timestamp: Date.now(),
+    };
+
+    groupChat.messages.push(newMessage);
+    await groupChat.save();
+
+    res.send({ message: "Message sent successfully" });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.get("/groupchats", async (req, res) => {
+  try {
+    const groups = await Group.find({});
+    console.log(groups);
+
+    if (groups.length > 0) {
+      res.send(groups);
+    } else {
+      res.status(404).send({ message: "No topics found" });
+    }
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+app.post("/auth/addDoc", async (req, res) => {
+  const { CourseID, subTitle, subContent, ContentID } = req.body;
+
+  const Documentations = new Documentation({
+    CourseID, subTitle, subContent, ContentID
+  });
+
+  Documentations
+    .save()
+    .then(() => {
+      res.send({ message: "Documentation added successfully" });
+    })
+    .catch((error) => {
+      res.status(500).send({ error: error.message });
+    });
+});
+
+app.get("/auth/getDoc", async (req, res) => {
+  Documentation
+    .find({})
+    .then((resp) => {
+      res.send(resp);
+    })
+    .catch((error) => {
+      res.status(500).send({ error: error.message });
+    });
+});
+
 app.listen(PORT, function () {
-  console.log("Backend is running on Port: "+PORT);
+  console.log("Backend is running on Port: " + PORT);
+});
+
+server.listen(3002, () => {
+  console.log("SERVER RUNNING");
 });
