@@ -5,9 +5,6 @@ import cors from "cors";
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
 import { memoryStorage } from "multer";
-import http from "http";
-import { Server } from "socket.io";
-
 dotenv.config();
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -26,29 +23,6 @@ app.use(function (req, res, next) {
     "x-access-token, Origin, X-Requested-With, Content-Type, Accept"
   );
   next();
-});
-
-const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-  },
-});
-
-io.on("connection", (socket) => {
-
-  socket.on("join_room", (data) => {
-    socket.join(data);
-  });
-
-  socket.on("send_message", (data) => {
-    socket.to(data.room).emit("receive_message", data);
-  });
-
-  socket.on("disconnect", () => {
-  });
 });
 
 try {
@@ -864,8 +838,4 @@ app.get("/auth/getProject/:id", async (req, res) => {
 });
 app.listen(PORT, function () {
   console.log("Backend is running on Port: " + PORT);
-});
-
-server.listen(3002, () => {
-  console.log("SERVER RUNNING");
 });
