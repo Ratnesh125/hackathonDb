@@ -32,7 +32,17 @@ try {
 } catch (error) {
   console.log("DB not Connected");
 }
-
+const courseSuggestedSchema = new mongoose.Schema({
+  courseName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+});
 const userSchema = new Schema(
   {
     Username: {
@@ -231,6 +241,7 @@ const Videos = model("Videos", VideoSchema);
 const Notes = model("Notes", NotesSchema);
 const Projects = model("Projects", ProjectSchema);
 const Documentation = model("Documentation", DocumentationSchema);
+const CourseSuggested = model('CourseSuggested', courseSuggestedSchema);
 
 app.post("/auth/login", (req, res) => {
   try {
@@ -877,6 +888,18 @@ app.get("/auth/getProjects/:id", async (req, res) => {
     } catch {
       res.send("db error");
     }
+});
+app.post('/suggestcourse', async (req, res) => {
+  const { courseName, description } = req.body;
+  if (!courseName || !description) {
+    return res.status(400).json({ error: 'Both courseName and description are required.' });
+  }
+  const newCourseSuggested = new CourseSuggested({
+    courseName,
+    description,
+  });
+  const savedCourse = await newCourseSuggested.save();
+  res.status(201).json(savedCourse);
 });
 app.listen(PORT, function () {
   console.log("Backend is running on Port: " + PORT);
