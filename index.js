@@ -473,7 +473,7 @@ addNotes.save()
 app.post("/auth/addProject", async (req, res) => {
   try {
     const { UserID, ProjectTitle, ProjectDesc, GitRepoLink, CourseID } = req.body;
-
+console.log(req.body);
     const addProject = new Projects({
       UserID,
       ProjectTitle,
