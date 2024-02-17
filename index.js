@@ -782,7 +782,7 @@ app.post("/auth/addDoc", async (req, res) => {
 
 app.get("/auth/getDoc/:id", async (req, res) => {
         const { id } = req.params;
-      Documentation.findOne({ CourseID: id }).then((resp) => {
+      Documentation.findOne({ CourseID: id,Status: { $eq: "Accepted" }}).then((resp) => {
       res.send(resp);
     })
     .catch((error) => {
