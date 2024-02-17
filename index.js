@@ -821,7 +821,7 @@ app.get("/auth/getDocs/:id", async (req, res) => {
 app.get("/auth/getVideo/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      Videos.findOne({ UserID: id })
+      Videos.find({ UserID: id })
         .then((item) => {
           res.send({ data: item });
         })
@@ -836,7 +836,7 @@ app.get("/auth/getVideo/:id", async (req, res) => {
 app.get("/auth/getNotes/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      Notes.findOne({ UserID: id })
+      Notes.find({ UserID: id })
         .then((item) => {
           res.send({ data: item });
         })
@@ -851,7 +851,7 @@ app.get("/auth/getNotes/:id", async (req, res) => {
 app.get("/auth/getProject/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      Projects.findOne({ UserID: id })
+      Projects.find({ UserID: id })
         .then((item) => {
           res.send({ data: item });
         })
