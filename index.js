@@ -867,7 +867,7 @@ app.get("/auth/getProject/:id", async (req, res) => {
 app.get("/auth/getProjects/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      Projects.find({ CourseID: id,Status: { $eq: "Accepted" } })
+      Projects.find({ CourseID: id })
         .then((item) => {
           res.send({ data: item });
         })
