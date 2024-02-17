@@ -32,7 +32,7 @@ try {
 } catch (error) {
   console.log("DB not Connected");
 }
-const courseSuggestedSchema = new mongoose.Schema({
+const courseSuggestedSchema = new Schema({
   courseName: {
     type: String,
     required: true,
