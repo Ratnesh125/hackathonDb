@@ -134,7 +134,7 @@ const courseSchema = new Schema(
       type: String,
       trim: true,
     },
-    userId: { type: String },
+    userID: { type: String },
   },
   { timestamps: true },
   { versionKey: false },
@@ -143,10 +143,15 @@ const courseSchema = new Schema(
 
 const VideoSchema = Schema(
   {
+    UserID:{type:String},
     CourseID: { type: String },
     VideoTitle: { type: String },
     VideoDesc: { type: String },
     VideoLink: { type: String },
+     Status: {
+      type: String,
+      default: "Rejected",
+    },
   },
   { timestamps: true },
   { versionKey: false },
@@ -155,10 +160,15 @@ const VideoSchema = Schema(
 
 const NotesSchema = Schema(
   {
+    UserID:{type:String},
     CourseID: { type: String },
     NotesTitle: { type: String },
     NotesDesc: { type: String },
     NotesLink: { type: String },
+     Status: {
+      type: String,
+      default: "Rejected",
+    },
   },
   { timestamps: true },
   { versionKey: false },
@@ -167,6 +177,7 @@ const NotesSchema = Schema(
 
 const ProjectSchema = Schema(
   {
+    UserID:{type:String},
     CourseID: { type: String },
     ProjectTitle: { type: String },
     ProjectDesc: { type: String },
@@ -179,10 +190,15 @@ const ProjectSchema = Schema(
 
 const DocumentationSchema = Schema(
   {
+    UserID:{type:String},
     CourseID: { type: String },
     subTitle: { type: String },
     subContent: { type: String },
     ContentID: { type: String },
+    Status: {
+      type: String,
+      default: "Rejected",
+    },
   },
   { timestamps: true },
   { versionKey: false },
@@ -344,27 +360,16 @@ const upload = multer({ storage: storage });
 
 app.post(
   "/auth/addCourse",
-  upload.fields([
-    { name: "imageLink", maxCount: 1 },
-    { name: "videoLink", maxCount: 1 },
-  ]),
+  upload.single("imageLink"),
   async (req, res) => {
     try {
-      if (!req.files || !req.files.imageLink || !req.files.videoLink) {
-        return res.status(400).send("Both image and video files are required.");
-      }
-      const { title, description, lvlOfDiff, userId } = req.body;
+      const { title, description, lvlOfDiff, userID } = req.body;
 
       const courseInUse = await isCourseAlreadyInUse(title);
       if (courseInUse) {
         return res.send({ message: "Course already Exist", success: false });
       }
-
-      const imageFile = req.files.imageLink[0]; // Extract image file from req.files
-      const videoFile = req.files.videoLink[0]; // Extract video file from req.files
-      if (!imageFile || !videoFile) {
-        return res.status(400).send("Both image and video files are required.");
-      }
+      const imageFile = req.file;      
 
       const imageBase64String = imageFile.buffer.toString("base64");
       let constructedString =
@@ -373,35 +378,19 @@ app.post(
         folder: "Techbuddies",
         public_id: "Course_" + Date.now() + "_image",
       });
-      console.log("I am here");
+      
       const imageLink = imageResult.secure_url;
-
-      const videoBase64String = videoFile.buffer.toString("base64");
-      let constructedVideoString =
-        "data:" + videoFile.mimetype + ";" + "base64," + videoBase64String;
-
-      const videoResult = await cloudinary.uploader.upload(
-        constructedVideoString,
-        {
-          resource_type: "video",
-          folder: "Techbuddies",
-          public_id: "Course_" + Date.now() + "_video",
-        }
-      );
-      const videoLink = videoResult.secure_url;
 
       const addCourse = new Course({
         title,
         description,
         lvlOfDiff,
         imageLink,
-        videoLink,
-        userId,
+        userID,
       });
       addCourse
         .save()
         .then((item) => {
-          console.log(item);
           res.send({ message: "Course Added", data: item, success: true });
         })
         .catch((err) => {
@@ -409,6 +398,7 @@ app.post(
           res.send({ message: "Please Try Again", success: false });
         });
     } catch (err) {
+
       res.send({ message: "Course Can't Added", success: false });
     }
   }
@@ -422,7 +412,7 @@ app.post("/auth/addVideo", upload.single("VideoLink"), async (req, res) => {
         .send({ message: "No file uploaded", success: false });
     }
 
-    const { VideoTitle, VideoDesc, CourseID } = req.body;
+    const { UserID,VideoTitle, VideoDesc, CourseID } = req.body;
 
     const videoFile = req.file;
 
@@ -448,6 +438,7 @@ app.post("/auth/addVideo", upload.single("VideoLink"), async (req, res) => {
     const VideoLink = videoResult.secure_url;
     console.log(VideoLink);
     const addVideos = new Videos({
+      UserID,
       VideoTitle,
       VideoDesc,
       CourseID,
@@ -467,14 +458,11 @@ app.post("/auth/addVideo", upload.single("VideoLink"), async (req, res) => {
 
 app.post("/auth/addNotes", upload.single("NotesLink"), async (req, res) => {
   try {
-    if (!req.files || !req.files.NotesLink) {
-      return res.status(400).send("video files are required.");
-    }
-    const { NotesTitle, NotesDesc, CourseID } = req.body;
+    const {UserID, NotesTitle, NotesDesc, CourseID } = req.body;
 
-    const notesLink = req.files.NotesLink;
+    const notesLink = req.file;
     if (!notesLink) {
-      return res.status(400).send("video files are required.");
+      return res.status(400).send("Notes files are required.");
     }
 
     const videoBase64String = notesLink.buffer.toString("base64");
@@ -492,12 +480,13 @@ app.post("/auth/addNotes", upload.single("NotesLink"), async (req, res) => {
     const NotesLink = videoResult.secure_url;
 
     const addNotes = new Notes({
+      UserID,
       NotesTitle,
       NotesDesc,
       CourseID,
       NotesLink,
     });
-    Notes.save()
+addNotes.save()
       .then((item) => {
         console.log(item);
         res.send({ message: "Notes Added", data: item, success: true });
@@ -512,9 +501,10 @@ app.post("/auth/addNotes", upload.single("NotesLink"), async (req, res) => {
 });
 app.post("/auth/addProject", async (req, res) => {
   try {
-    const { ProjectTitle, ProjectDesc, GitRepoLink, CourseID } = req.body;
+    const { UserID, ProjectTitle, ProjectDesc, GitRepoLink, CourseID } = req.body;
 
     const addProject = new Projects({
+      UserID,
       ProjectTitle,
       ProjectDesc,
       GitRepoLink,
@@ -777,10 +767,10 @@ app.get("/groupchats", async (req, res) => {
 });
 
 app.post("/auth/addDoc", async (req, res) => {
-  const { CourseID, subTitle, subContent, ContentID } = req.body;
+  const { UserID,CourseID, subTitle, subContent, ContentID } = req.body;
 
   const Documentations = new Documentation({
-    CourseID, subTitle, subContent, ContentID
+    UserID,CourseID, subTitle, subContent, ContentID
   });
 
   Documentations
