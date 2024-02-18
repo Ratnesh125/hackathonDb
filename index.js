@@ -176,6 +176,7 @@ const DocumentationSchema = Schema(
     subTitle: { type: String },
     subContent: { type: String },
     ContentID: { type: String },
+    Version:{type: Number, default:1},
     Status: {
       type: String,
       default: "Pending",
@@ -778,6 +779,18 @@ app.post("/auth/addDoc", async (req, res) => {
     .catch((error) => {
       res.status(500).send({ error: error.message });
     });
+});
+
+app.post("/auth/updateDoc", async (req, res) => {
+  try {
+    let { UserID,CourseID, subTitle, subContent, ContentID,Version } = req.body;
+    Version = Version + 1;
+    await Documentation.findByIdAndUpdate(CourseID:CourseID, { UserID,CourseID, subTitle, subContent, ContentID,Version});
+    res.status(200).json({ message: "Documentation Status Updated" });
+  } catch (error) {
+    console.error("Error in updateAcceptOrder:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
 app.get("/auth/getDoc/:id", async (req, res) => {
