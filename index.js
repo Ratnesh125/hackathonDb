@@ -704,14 +704,14 @@ app.post("/creategroup", async (req, res) => {
   }
 });
 
-app.get("/sendmessage", async (req, res) => {
+app.post("/sendmessage", async (req, res) => {
   try {
-    // const { groupId, sender, content } = req.body;
-    // if (!groupId || !sender || !content) {
-    //     return res.status(400).json({ error: 'Missing required parameters' });
-    // }
-    const groupId = 1707912300397;
-    sender = "ratnesh";
+    const { groupId, sender, content } = req.body;
+
+    if (!groupId || !sender || !content) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
     const groupChat = await Group.findOne({ groupId });
 
     if (!groupChat) {
@@ -719,8 +719,8 @@ app.get("/sendmessage", async (req, res) => {
     }
 
     const newMessage = {
-      sender: "he",
-      content: "I'm fine",
+      sender: sender,
+      content: content,
       timestamp: Date.now(),
     };
 
