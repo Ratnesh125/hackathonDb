@@ -732,6 +732,21 @@ app.post("/sendmessage", async (req, res) => {
     res.status(500).send({ error: error.message });
   }
 });
+app.get("/groups/:groupId", async (req, res) => {
+  try {
+    const groupId = req.params.groupId;
+    if (!groupId) {
+      return res.status(400).json({ error: 'Missing group ID' });
+    }
+    const group = await Group.findOne({ groupId });
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    res.status(200).json({ group });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.get("/groupchats", async (req, res) => {
   try {
