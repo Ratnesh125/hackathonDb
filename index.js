@@ -783,15 +783,29 @@ app.post("/auth/addDoc", async (req, res) => {
 
 app.post("/auth/updateDoc", async (req, res) => {
   try {
-    let { UserID,CourseID, subTitle, subContent, ContentID,Version } = req.body;
-    Version = Version + 1;
-    await Documentation.findByIdAndUpdate(CourseID:CourseID, { UserID,CourseID, subTitle, subContent, ContentID,Version});
-    res.status(200).json({ message: "Documentation Status Updated" });
+    let { UserID, CourseID, subTitle, subContent, ContentID, Version } = req.body;
+    Version = parseInt(Version) + 1; // Increment Version
+
+    // Using the mongoose model to find and update the document
+    let updatedDoc = await Documentation.findByIdAndUpdate(CourseID,
+      {
+        UserID: UserID,
+        CourseID: CourseID,
+        subTitle: subTitle,
+        subContent: subContent,
+        ContentID: ContentID,
+        Version: Version
+      },
+      { new: true } // To return the updated document
+    );
+
+    res.status(200).json({ message: "Documentation Status Updated", updatedDoc });
   } catch (error) {
     console.error("Error in updateAcceptOrder:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
 
 app.get("/auth/getDoc/:id", async (req, res) => {
         const { id } = req.params;
